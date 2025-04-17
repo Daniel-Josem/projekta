@@ -1,4 +1,4 @@
-echo "__pycache__/
+__pycache__/
 *.pyc
 *.pyo
 *.pyd
@@ -9,13 +9,15 @@ echo "__pycache__/
 *.sqlite3
 *.docx
 *.xlsx
+*.pdf
 .DS_Store
 desktop.ini
-Thumbs.db
 Documents/
 Pictures/
 Videos/
 Downloads/
 Music/
 Saved Games/
-AppData/" > .gitignore
+AppData/
+OneDrive/
+*.tmp
