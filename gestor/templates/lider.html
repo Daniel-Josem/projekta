@@ -7,6 +7,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
     <link href="/static/css/visual.css" rel="stylesheet"/>
+    <link rel="icon" href="{{ url_for('static', filename='avatars/barra_lateral.png')}}">
+
 </head>
 <body>
     <div class="d-flex" id="wrapper">
@@ -55,18 +57,20 @@
                                 <li><a class="dropdown-item text-primary text-center" href="#" id="marcarTodasLeidas">Marcar todas como leídas</a></li>
                             </ul>
                         </li>
-                        <li class="nav-item dropdown">
-                            <a href="#" class="nav-link d-flex align-items-center text-dark text-decoration-none dropdown-toggle" id="perfilDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-person-circle fs-4 me-2"></i>
-                                <span class="user-name"><strong>Nombre Profesor</strong></span>
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end text-small" aria-labelledby="perfilDropdown">
-                                <li><a class="dropdown-item" href="#" id="btnEditarPerfil">Editar perfil</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="{{ url_for('login.logout') }}">Cerrar sesión</a></li>
-                            </ul>
-                        </li>
-                    </ul>
+                        <li class="nav-item user-dropdown-wrapper d-flex justify-content-end align-items-center">
+                    <div class="dropdown">
+                        <button class="btn dropdown-toggle user-pill d-flex align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="{{ url_for('static', filename='avatars/perfil_predeterminado.png') }}" alt="avatar" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;" />
+                        <span class="user-name fw-bold">Nombre Del lider</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                        <li><a class="dropdown-item" href="#" id="btnEditarPerfil">Editar perfil</a></li>
+                        <li><hr class="dropdown-divider" /></li>
+                        <li><a class="dropdown-item text-danger" href="{{ url_for('logout') }}">Cerrar sesión</a></li>
+                        </ul>
+                    </div>
+                    </li> 
+                </ul>
                 </div>
             </nav>
 
@@ -107,8 +111,7 @@
                                 <th>Correo</th>
                             </tr>
                         </thead>
-                        <tbody id="studentsTableBody">
-                        </tbody>
+                        <tbody id="studentsTableBody"></tbody>
                     </table>
                 </div>
                 <div id="noStudentsMessage" class="alert alert-info text-center d-none" role="alert">
