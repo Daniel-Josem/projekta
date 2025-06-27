@@ -1,0 +1,23 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+*.ini
+*.lnk
+*.db
+*.sqlite3
+*.docx
+*.xlsx
+*.pdf
+.DS_Store
+desktop.ini
+Documents/
+Pictures/
+Videos/
+Downloads/
+Music/
+Saved Games/
+AppData/
+OneDrive/
+*.tmp
