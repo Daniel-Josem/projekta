@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 import sqlite3
+from werkzeug.security import generate_password_hash, check_password_hash
 
 login_blueprint = Blueprint('login', __name__)
 
@@ -17,14 +18,14 @@ def crear_tabla_usuario():
             correo TEXT NOT NULL UNIQUE,
             contraseña TEXT NOT NULL,
             rol TEXT DEFAULT 'trabajador',
-            estado TEXT DEFAULT 'activo'
+            estado TEXT DEFAULT 'activo',
+            grupo TEXT
         )
     ''')
 
     conn.commit()
     conn.close()
 
-# Crear usuarios iniciales (admin y lider)
 def crear_usuarios_iniciales():
     usuarios = [
         {
@@ -32,16 +33,27 @@ def crear_usuarios_iniciales():
             'nombre_usuario': 'admin',
             'documento': '1001',
             'correo': 'admin@correo.com',
-            'contraseña': 'admin123',
-            'rol': 'admin'
+            'contraseña': generate_password_hash('admin123'),
+            'rol': 'admin',
+            'grupo': 'Administración'
         },
         {
             'nombre_completo': 'Líder Operativo',
             'nombre_usuario': 'lider',
             'documento': '1002',
             'correo': 'lider@correo.com',
-            'contraseña': 'lider123',
-            'rol': 'lider'
+            'contraseña': generate_password_hash('lider123'),
+            'rol': 'lider',
+            'grupo': 'Operaciones'
+        },
+        {
+            'nombre_completo': 'Usuario Prueba',
+            'nombre_usuario': 'usuario1',
+            'documento': '1003',
+            'correo': 'prueba@correo.com',
+            'contraseña': generate_password_hash('1234'),
+            'rol': 'trabajador',
+            'grupo': 'Grupo 1'
         }
     ]
 
@@ -49,23 +61,33 @@ def crear_usuarios_iniciales():
     cursor = conn.cursor()
 
     for usuario in usuarios:
-        cursor.execute("SELECT * FROM Usuario WHERE nombre_usuario = ?", (usuario['nombre_usuario'],))
+        # Verificar que ni el usuario, ni el documento ni el correo existan
+        cursor.execute('''
+            SELECT * FROM Usuario 
+            WHERE nombre_usuario = ? OR documento = ? OR correo = ?
+        ''', (usuario['nombre_usuario'], usuario['documento'], usuario['correo']))
         existente = cursor.fetchone()
+
         if not existente:
             cursor.execute('''
-                INSERT INTO Usuario (nombre_completo, nombre_usuario, documento, correo, contraseña, rol)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO Usuario (nombre_completo, nombre_usuario, documento, correo, contraseña, rol, grupo)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
             ''', (
                 usuario['nombre_completo'],
                 usuario['nombre_usuario'],
                 usuario['documento'],
                 usuario['correo'],
                 usuario['contraseña'],
-                usuario['rol']
+                usuario['rol'],
+                usuario['grupo']
             ))
+        else:
+            print(f"El usuario '{usuario['nombre_usuario']}' ya existe.")
 
     conn.commit()
     conn.close()
+    print('Usuarios iniciales creados correctamente.')
+
 
 # Ejecutar al importar el blueprint
 crear_tabla_usuario()
@@ -86,20 +108,21 @@ def login():
 
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute('SELECT * FROM Usuario WHERE nombre_usuario = ? AND contraseña = ?', (nombre_usuario, contrasena))
+        cursor.execute('SELECT * FROM Usuario WHERE nombre_usuario = ?', (nombre_usuario,))
         usuario = cursor.fetchone()
         conn.close()
 
-        if usuario:
+        if usuario and check_password_hash(usuario['contraseña'], contrasena):
             session['usuario'] = nombre_usuario
+            session['grupo'] = usuario['grupo']  # ✅ Guardar el grupo en la sesión
             rol = usuario['rol']
 
             if rol == 'admin':
                 return redirect(url_for('administrador'))
             elif rol == 'lider':
-                return redirect(url_for('lideres'))
+                return redirect(url_for('lider.lideres'))
             else:
-                return redirect(url_for('trabajador'))
+                return redirect(url_for('trabajador.trabajador'))
         else:
             flash('Usuario o contraseña incorrectos.')
 
@@ -114,15 +137,25 @@ def crear_usuario():
         documento = request.form['documento']
         correo = request.form['correo']
         contrasena = request.form['contrasena']
+        grupo = request.form['grupo']
 
         conn = get_db_connection()
         cursor = conn.cursor()
         try:
-            cursor.execute('INSERT INTO Usuario (nombre_completo, nombre_usuario, documento, correo, contraseña) VALUES (?, ?, ?, ?, ?)',
-                           (nombre, nombre_usuario, documento, correo, contrasena))
+            cursor.execute('''
+                INSERT INTO Usuario (nombre_completo, nombre_usuario, documento, correo, contraseña, grupo)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (
+                nombre,
+                nombre_usuario,
+                documento,
+                correo,
+                generate_password_hash(contrasena),  # Encriptación
+                grupo
+            ))
             conn.commit()
             flash('Usuario creado exitosamente.')
-            return redirect(url_for('login.login'))  # Correcto para blueprint
+            return redirect(url_for('login.login'))
         except sqlite3.IntegrityError:
             flash('El nombre de usuario, documento o correo ya existe.')
         finally:

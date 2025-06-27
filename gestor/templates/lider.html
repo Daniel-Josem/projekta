@@ -1,22 +1,23 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Panel Profesor</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
-    <link href="/static/css/visual.css" rel="stylesheet"/>
+    <link href="/static/css/visual.css" rel="stylesheet" />
     <link rel="icon" href="{{ url_for('static', filename='avatars/barra_lateral.png')}}">
-
 </head>
+
 <body>
     <div class="d-flex" id="wrapper">
         <!-- Sidebar visual admin, pero con lógica líder -->
         <nav id="sidebar" class="sidebar bg-success text-white vh-100 p-3">
             <div class="sidebar-header mb-4 d-flex flex-column align-items-center">
                 <span class="sidebar-logo-wrap">
-                  <img src="/static/avatars/barra_lateral.png" alt="Logo" class="sidebar-logo" />
+                    <img src="/static/avatars/barra_lateral.png" alt="Logo" class="sidebar-logo" />
                 </span>
                 <span class="sidebar-title fw-bold">Líder</span>
             </div>
@@ -58,24 +59,33 @@
                             </ul>
                         </li>
                         <li class="nav-item user-dropdown-wrapper d-flex justify-content-end align-items-center">
-                    <div class="dropdown">
-                        <button class="btn dropdown-toggle user-pill d-flex align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <img src="{{ url_for('static', filename='avatars/perfil_predeterminado.png') }}" alt="avatar" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;" />
-                        <span class="user-name fw-bold">Nombre Del lider</span>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end shadow-sm">
-                        <li><a class="dropdown-item" href="#" id="btnEditarPerfil">Editar perfil</a></li>
-                        <li><hr class="dropdown-divider" /></li>
-                        <li><a class="dropdown-item text-danger" href="{{ url_for('logout') }}">Cerrar sesión</a></li>
-                        </ul>
-                    </div>
-                    </li> 
-                </ul>
+                            <div class="dropdown">
+                                <button class="btn dropdown-toggle user-pill d-flex align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <img src="{{ url_for('static', filename='avatars/perfil_predeterminado.png') }}" alt="avatar" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;" />
+                                    <span class="user-name fw-bold">Nombre Del lider</span>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                    <li><a class="dropdown-item" href="#" id="btnEditarPerfil">Editar perfil</a></li>
+                                    <li><hr class="dropdown-divider" /></li>
+                                    <li><a class="dropdown-item text-danger" href="{{ url_for('logout') }}">Cerrar sesión</a></li>
+                                </ul>
+                            </div>
+                        </li>
+                    </ul>
                 </div>
             </nav>
 
+            <!-- Gestión de Tareas -->
             <div class="main-container" id="tasksContainer">
                 <h1>Gestión de Tareas</h1>
+
+                <!-- Botón para crear tarea -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <button class="btn btn-success" id="btnCrearTarea" data-bs-toggle="modal" data-bs-target="#modalTarea">
+                        <i class="bi bi-plus-circle me-2"></i> Crear Tarea
+                    </button>
+                </div>
+
                 <div class="table-responsive mt-4">
                     <table class="table table-striped table-hover tabla-tareas">
                         <thead>
@@ -91,7 +101,47 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr><td colspan="8" class="text-center">No hay tareas</td></tr>
+                            {% if tareas %}
+                                {% for tarea in tareas %}
+                                    <tr>
+                                        <td>{{ tarea['titulo'] }}</td>
+                                        <td>{{ tarea['descripcion'] }}</td>
+                                        <td>{{ tarea['curso_destino'] }}</td>
+                                        <td>{{ tarea['fecha_vencimiento'] }}</td>
+                                        <td>{{ tarea['prioridad'] }}</td>
+                                        <td>{{ tarea['estado'] }}</td>
+                                        <td>
+                                            {% if tarea['ruta_archivo'] %}
+                                                <a href="{{ url_for('static', filename=tarea['ruta_archivo']) }}" target="_blank">Ver archivo</a>
+                                            {% else %}
+                                                Sin archivo
+                                            {% endif %}
+                                        </td>
+                                        <td class="d-flex gap-2">
+                                            <!-- Botón editar tarea -->
+                                            <button type="button" class="btn btn-warning btn-sm btnEditar" data-bs-toggle="modal" data-bs-target="#modalTarea"
+                                                data-id="{{ tarea['id'] }}"
+                                                data-titulo="{{ tarea['titulo'] }}"
+                                                data-descripcion="{{ tarea['descripcion'] }}"
+                                                data-curso="{{ tarea['curso_destino'] }}"
+                                                data-fecha="{{ tarea['fecha_vencimiento'] }}"
+                                                data-prioridad="{{ tarea['prioridad'] }}"
+                                                data-estado="{{ tarea['estado'] }}">
+                                                Editar
+                                            </button>
+
+                                            <!-- Botón eliminar tarea -->
+                                            <form method="POST" action="{{ url_for('lider.eliminar_tarea', id=tarea['id']) }}" style="display:inline;">
+                                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de que deseas eliminar esta tarea?');">
+                                                    Eliminar
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr><td colspan="8" class="text-center">No hay tareas</td></tr>
+                            {% endif %}
                         </tbody>
                     </table>
                 </div>
@@ -119,9 +169,10 @@
                 </div>
             </div>
 
+            <!-- Modal Crear/Editar Tarea -->
             <div class="modal fade" id="modalTarea" tabindex="-1" aria-labelledby="modalTareaLabel" aria-hidden="true">
                 <div class="modal-dialog">
-                    <form id="formEditar" class="modal-content">
+                    <form id="formEditar" class="modal-content" method="POST" enctype="multipart/form-data" action="{{ url_for('lider.crear_tarea') }}">
                         <input type="hidden" name="id" id="tareaId" />
                         <div class="modal-header">
                             <h5 class="modal-title" id="modalTareaLabel">Crear / Editar Tarea</h5>
@@ -137,7 +188,7 @@
                                 <textarea id="descripcion" name="descripcion" class="form-control" rows="3"></textarea>
                             </div>
                             <div class="mb-3">
-                                <label for="curso_destino">Curso destino</label>
+                                <label for="curso_destino">Grupo destino</label>
                                 <select id="curso_destino" name="curso_destino" class="form-select" required>
                                     <option value="" disabled selected>Seleccione un curso</option>
                                     <option value="Grupo 1">Grupo 1</option>
@@ -146,7 +197,7 @@
                                     <option value="Grupo 4">Grupo 4</option>
                                     <option value="Grupo 5">Grupo 5</option>
                                 </select>
-                            </div>                    
+                            </div>
                             <div class="row">
                                 <div class="col-6 mb-3">
                                     <label for="fecha_vencimiento">Fecha de vencimiento</label>
@@ -182,6 +233,7 @@
                 </div>
             </div>
 
+            <!-- Modal Perfil -->
             <div class="modal fade" id="modalPerfilProfesor" tabindex="-1" aria-labelledby="modalPerfilProfesorLabel" aria-hidden="true">
                 <div class="modal-dialog">
                     <form id="formPerfilProfesor" class="modal-content">
@@ -222,9 +274,12 @@
                     </form>
                 </div>
             </div>
+
             <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
             <script src="/static/js/dashboard.js"></script>
+            <script src="/static/js/lider.js"></script>
         </div>
     </div>
 </body>
+
 </html>
